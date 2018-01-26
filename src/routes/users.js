@@ -1,19 +1,9 @@
 const users = require('express').Router()
 const { User } = require('../models')
-
-users.post('/signup', (req, res) => {
-  const { avatar, name, email, password } = req.body
-  const user = new User({
-    avatar,
-    name,
-    email,
-    password
-  })
-
-  user
-    .save()
-    .then(response => res.send(response))
-    .catch(console.log)
+const { signIn, signUp } = require('../controllers/user')({
+  User
 })
+users.post('/signIn', signIn)
+users.post('/signup', signUp)
 
 module.exports = users
