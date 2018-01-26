@@ -1,5 +1,5 @@
 const posts = require('express').Router()
-const { Post, Comment, Like } = require('../models')
+const { Post, Comment } = require('../models')
 const {
   get,
   getDetail,
@@ -8,8 +8,7 @@ const {
   likePost
 } = require('../controllers/post')({
   Post,
-  Comment,
-  Like
+  Comment
 })
 module.exports = fileHandler => {
   posts.get('/', get)

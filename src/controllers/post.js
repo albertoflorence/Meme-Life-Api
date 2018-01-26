@@ -1,4 +1,4 @@
-module.exports = ({ Post, Comment, Like }) => {
+module.exports = ({ Post, Comment }) => {
   const create = (req, res, next) => {
     const { title, category, description, content } = req.body
 
@@ -36,7 +36,10 @@ module.exports = ({ Post, Comment, Like }) => {
 
   const getDetail = (req, res, next) => {
     const { id } = req.params
+    const userId = '5a6992517d27e016a8babffd'
+
     Post.findOne({ _id: id })
+      .populate('isLiked')
       .populate({
         path: 'comments',
         model: 'Comment',
@@ -48,7 +51,13 @@ module.exports = ({ Post, Comment, Like }) => {
       })
       .sort('-comments.createdAt')
       .exec()
-      .then(response => res.json(response))
+      .then(post => ({
+        ...post.toObject(),
+        commentCount: post.comments.length,
+        liked: post.liked(userId),
+        likeCount: post.likeCount()
+      }))
+      .then(post => res.json(post))
       .catch(next)
   }
 
@@ -73,25 +82,12 @@ module.exports = ({ Post, Comment, Like }) => {
     const { postId } = req.body
     const userId = '5a6992517d27e016a8babffd'
 
-    Like.findOne({
-      postId,
-      userId
-    })
-      .then(like => {
-        if (like) {
-          like.liked = !like.liked
-          return like
-        }
-        return new Like({ postId, userId, liked: true })
+    Post.findById(postId)
+      .then(post => {
+        post.like(userId)
+        return post.save()
       })
-      .then(like => like.save())
-      .then(like => {
-        const increment = like.liked ? +1 : -1
-        return Post.findByIdAndUpdate(postId, {
-          $inc: { likeCount: increment }
-        })
-      })
-      .then(post => res.send(post))
+      .then(post => res.json(post))
       .catch(next)
   }
 
