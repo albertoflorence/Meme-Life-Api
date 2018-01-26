@@ -6,7 +6,7 @@ module.exports = Schema => {
       author: { type: ObjectId, ref: 'User' },
       body: String
     },
-    { timestamps: { createdAt: 'created_at' } }
+    { timestamps: { createdAt: 'createdAt' } }
   )
 
   return commentSchema

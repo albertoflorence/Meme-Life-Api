@@ -6,14 +6,20 @@ module.exports = Schema => {
       id: ObjectId,
       title: String,
       content_url: String,
-      created_at: Date,
       category: String,
       description: String,
       author: { type: ObjectId, ref: 'User' },
-      comments: [{ type: ObjectId, ref: 'Comment' }]
+      comments: [{ type: ObjectId, ref: 'Comment' }],
+      likeCount: Number
     },
-    { timestamps: { createdAt: 'created_at' } }
+    { timestamps: { createdAt: 'createdAt' } }
   )
+
+  const autoPopulateAuthor = function(next) {
+    this.populate('author', 'name avatar _id')
+    next()
+  }
+  postSchema.pre('find', autoPopulateAuthor).pre('findOne', autoPopulateAuthor)
 
   return postSchema
 }
