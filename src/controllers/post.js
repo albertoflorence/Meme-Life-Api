@@ -2,7 +2,7 @@ module.exports = ({ Post, Comment }) => {
   const create = (req, res, next) => {
     const { title, category, description, content } = req.body
 
-    const author = '5a698eb1ecbbb51c3c74a413'
+    const author = req.user._id
 
     const host = req.protocol + '://' + req.headers.host
     const content_url = req.file
@@ -28,9 +28,10 @@ module.exports = ({ Post, Comment }) => {
 
   const get = (req, res, next) => {
     const filter = req.query
-    const userId = '5a6992517d27e016a8babffd'
+    const userId = req.user && req.user._id
 
     Post.find(filter)
+      .select('-comments')
       .sort({ createdAt: -1 })
       .lean()
       .exec()
@@ -42,7 +43,7 @@ module.exports = ({ Post, Comment }) => {
 
   const getDetail = (req, res, next) => {
     const { id } = req.params
-    const userId = '5a6992517d27e016a8babffd'
+    const userId = req.user && req.user._id
 
     Post.findOne({ _id: id })
       .populate({
@@ -66,34 +67,33 @@ module.exports = ({ Post, Comment }) => {
   const addComment = (req, res, next) => {
     const { body, postId } = req.body
 
-    const author = '5a6992517d27e016a8babffd'
-
-    const comment = new Comment({
-      author,
-      body
-    })
+    const author = req.user._id
 
     Post.findById(postId)
       .then(post => {
+        const comment = new Comment({
+          author,
+          body
+        })
         post.comments.push(comment._id)
         post.commentsCount += 1
-        return post.save()
+        post.save()
+        return comment.save()
       })
-      .then(response => res.json(response))
-      .then(e => comment.save())
+      .then(comment => res.send(comment))
       .catch(next)
   }
 
   const likePost = (req, res, next) => {
     const { postId } = req.body
-    const userId = '5a6992517d27e016a8babffd'
+    const userId = req.user._id
 
     Post.findById(postId)
       .then(post => {
         post.like(userId)
         return post.save()
       })
-      .then(post => res.json(post))
+      .then(post => res.json(post.getLikeInfo(userId)))
       .catch(next)
   }
 
@@ -106,23 +106,27 @@ module.exports = ({ Post, Comment }) => {
   }
 }
 
-const liked = user => doc => {
-  if (!!doc.vote.positive.find(e => e.toString() === user)) {
+const liked = userId => doc => {
+  let user = userId
+  if (typeof user === 'object') {
+    user = userId.toString()
+  }
+  if (!!doc.vote.positive.find(ids => ids.toString() === user)) {
     return {
       ...doc,
       liked: true
     }
   }
-  if (!!doc.vote.negative.find(e => e.toString() === user)) {
+  if (!!doc.vote.negative.find(ids => ids.toString() === user)) {
     return {
       ...doc,
-      disLiked: true
+      disliked: true
     }
   }
   return {
     ...doc,
     liked: false,
-    disLiked: false
+    disliked: false
   }
 }
 
