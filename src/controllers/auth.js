@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken')
+
 module.exports = ({ User }) => {
   const signUp = (req, res, next) => {
     const { avatar, name, email, password } = req.body
@@ -7,23 +9,28 @@ module.exports = ({ User }) => {
       email,
       password
     })
-    const token = 'blabla'
 
     newUser
       .save()
-      .then(user => res.send({ token, user }))
+      .then(user => {
+        const token = user.getJwtToken()
+        res.send({ token, user })
+      })
       .catch(next)
   }
 
   const signIn = (req, res, next) => {
     const { email, password } = req.body
     const token = 'blabla'
-    User.findOne({ email, password }).then(
-      user =>
-        user
-          ? res.send({ user, token })
-          : next({ status: 404, message: 'Verify your credentials' })
-    )
+    User.login({ email, password })
+      .then(user => {
+        if (!user) {
+          return next({ status: 404, message: 'Verify your credentials' })
+        }
+        const token = user.getJwtToken()
+        res.send({ user, token })
+      })
+      .catch(next)
   }
 
   return {
