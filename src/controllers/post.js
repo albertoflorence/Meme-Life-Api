@@ -36,7 +36,6 @@ module.exports = ({ Post, Comment }) => {
       .lean()
       .exec()
       .then(posts => posts.map(liked(userId)))
-      .then(posts => posts.map(setDate))
       .then(response => res.json(response))
       .catch(next)
   }
@@ -46,20 +45,9 @@ module.exports = ({ Post, Comment }) => {
     const userId = req.user && req.user._id
 
     Post.findOne({ _id: id })
-      .populate({
-        path: 'comments',
-        model: 'Comment',
-        populate: {
-          path: 'author',
-          model: 'User',
-          select: 'name avatar _id'
-        }
-      })
-      .sort('-comments.createdAt')
       .lean()
       .exec()
       .then(liked(userId))
-      .then(setDate)
       .then(post => res.json(post))
       .catch(next)
   }
@@ -72,10 +60,13 @@ module.exports = ({ Post, Comment }) => {
     Post.findById(postId)
       .then(post => {
         const comment = new Comment({
+          postId,
+          body,
           author,
-          body
+          repliesCount: 0,
+          replies: []
         })
-        post.comments.push(comment._id)
+
         post.commentsCount += 1
         post.save()
         return comment.save()
@@ -128,32 +119,4 @@ const liked = userId => doc => {
     liked: false,
     disliked: false
   }
-}
-
-const setDate = doc => ({
-  ...doc,
-  createdAt: formatTime(new Date() - new Date(doc.createdAt))
-})
-
-const formatTime = (time, i = 0) => {
-  const arr = [1000, 60, 60, 24, 7, 4, 12]
-  const names = [
-    'millisecond',
-    'second',
-    'minute',
-    'hour',
-    'day',
-    'week',
-    'mounth',
-    'year'
-  ]
-  if (isNaN(i)) i = names.indexOf(i)
-
-  const cur = arr[i]
-  if (time >= cur && cur !== undefined) {
-    return formatTime(time / cur, i + 1)
-  }
-  const rounded = Math.floor(time)
-  const plural = rounded > 1 ? 's' : ''
-  return rounded + ' ' + names[i] + plural + ' ago'
 }

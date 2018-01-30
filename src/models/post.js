@@ -11,7 +11,7 @@ module.exports = Schema => {
       author: { type: ObjectId, ref: 'User' },
       commentsCount: Number,
       likesCount: Number,
-      disLikesCount: Number,
+      dislikesCount: Number,
       comments: [{ type: ObjectId, ref: 'Comment' }],
       vote: {
         positive: [{ type: ObjectId, ref: 'User' }],
@@ -34,20 +34,10 @@ module.exports = Schema => {
   postSchema.methods.like = like
   postSchema.methods.disLike = disLike
   postSchema.methods.liked = liked
-  postSchema.methods.metaData = metaData
-
-  postSchema.virtual('tesAAAAAAAAAAAAAAAAAAAAAt').get(function() {
-    return 'hmAAAAAAAAAAAAAAAAAm'
-  })
+  postSchema.methods.getLikeInfo = getLikeInfo
 
   return postSchema
 }
-
-const metaData = user => ({
-  commentCount: this.comments.length,
-  liked: this.liked(user),
-  likeCount: this.likeCocunt()
-})
 
 const autoPopulateAuthor = function(next) {
   this.populate('author', 'name avatar _id')
@@ -56,15 +46,15 @@ const autoPopulateAuthor = function(next) {
 
 function like(user) {
   const currentState = this.liked(user)
-  if (currentState === 'like') {
+  if (currentState === 'liked') {
     this.vote.positive.pull(user)
     this.likesCount -= 1
     return
   }
 
-  if (currentState === 'disLike') {
+  if (currentState === 'disliked') {
     this.vote.negative.pull(user)
-    this.disLikesCount -= 1
+    this.dislikesCount -= 1
   }
 
   this.vote.positive.push(user)
@@ -73,28 +63,42 @@ function like(user) {
 
 function disLike(user) {
   const currentState = this.liked(user)
-  if (currentState === 'disLike') {
+  if (currentState === 'disliked') {
     this.vote.negative.pull(user)
-    this.disLikesCount -= 1
+    this.dislikesCount -= 1
     return
   }
 
-  if (currentState === 'disLike') {
+  if (currentState === 'disliked') {
     this.vote.positive.pull(user)
     this.likesCount -= 1
   }
 
   this.vote.negative.push(user)
-  this.disLikesCount += 1
+  this.dislikesCount += 1
 }
 
-const liked = function(user) {
-  if (!!~this.vote.positive.indexOf(user)) {
-    return 'like'
+const liked = function(userId) {
+  let user = userId
+  if (typeof user === 'object') {
+    user = userId.toString()
   }
-  if (!!~this.vote.negative.indexOf(user)) {
-    return 'disLiked'
+  if (!!~this.vote.positive.findIndex(e => e.toString() === user)) {
+    return 'liked'
+  }
+  if (!!~this.vote.negative.findIndex(e => e.toString() === user)) {
+    return 'disliked'
   }
 
   return false
+}
+
+const getLikeInfo = function(user) {
+  const liked = this.liked(user)
+  return {
+    likesCount: this.likesCount,
+    dislikesCount: this.dislikesCount,
+    liked: liked === 'liked',
+    disliked: liked === 'disliked'
+  }
 }

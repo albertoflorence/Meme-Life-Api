@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
-mongoose.connect('mongodb://admin:admin@ds111638.mlab.com:11638/webmeme')
+const { DB_URI } = require('./SECRETS')
+mongoose.connect(DB_URI)
 
 module.exports = mongoose

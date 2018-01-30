@@ -4,7 +4,10 @@ module.exports = Schema => {
   const commentSchema = new Schema(
     {
       author: { type: ObjectId, ref: 'User' },
-      body: String
+      postId: { type: ObjectId, index: true, ref: 'Post' },
+      body: String,
+      repliesCount: Number,
+      replies: [{ type: ObjectId, ref: 'Comment' }]
     },
     { timestamps: { createdAt: 'createdAt' } }
   )

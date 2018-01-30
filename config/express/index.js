@@ -27,6 +27,7 @@ module.exports = app => {
 
   app.use('/posts', require('../../src/routes/posts')(content))
   app.use('/users', require('../../src/routes/users'))
+  app.use('/comments', require('../../src/routes/comments'))
 
   app.use((error, req, res, next) => {
     console.log(error)
