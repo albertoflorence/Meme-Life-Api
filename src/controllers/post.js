@@ -30,7 +30,7 @@ module.exports = ({ Post, Comment }) => {
   const get = (req, res, next) => {
     const { page = 1, ...filter } = req.query
     const userId = req.user && req.user._id
-    const skip = parseInt(page - 1)
+    const skip = parseInt(page - 1) * PAGE_LIMIT
     const maxPages = Post.find(filter)
       .count()
       .then(count => Math.ceil(count / PAGE_LIMIT))
@@ -39,7 +39,7 @@ module.exports = ({ Post, Comment }) => {
       .select('-comments')
       .sort({ createdAt: -1 })
       .limit(PAGE_LIMIT)
-      .skip(skip > -1 ? skip : 0)
+      .skip(skip)
       .sort({ createdAt: -1 })
       .lean()
       .then(posts => posts.map(liked(userId)))
