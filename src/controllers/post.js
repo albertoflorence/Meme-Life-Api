@@ -5,7 +5,7 @@ module.exports = ({ Post, Comment }) => {
 
     const author = req.user._id
 
-    const host = req.protocol + '://' + req.headers.host
+    const host = 'https://' + req.headers.host
     const content_url = req.file
       ? host + '/' + req.file.path.replace('\\', '/')
       : content
