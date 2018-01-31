@@ -1,3 +1,4 @@
+const PAGE_LIMIT = 5
 module.exports = ({ Post, Comment }) => {
   const create = (req, res, next) => {
     const { title, category, description, content } = req.body
@@ -27,16 +28,29 @@ module.exports = ({ Post, Comment }) => {
   }
 
   const get = (req, res, next) => {
-    const filter = req.query
+    const { page = 1, ...filter } = req.query
     const userId = req.user && req.user._id
+    const skip = parseInt(page - 1)
+    const maxPages = Post.find(filter)
+      .count()
+      .then(count => Math.ceil(count / PAGE_LIMIT))
 
-    Post.find(filter)
+    const docs = Post.find(filter)
       .select('-comments')
       .sort({ createdAt: -1 })
+      .limit(PAGE_LIMIT)
+      .skip(skip > -1 ? skip : 0)
+      .sort({ createdAt: -1 })
       .lean()
-      .exec()
       .then(posts => posts.map(liked(userId)))
-      .then(response => res.json(response))
+
+    Promise.all([maxPages, docs])
+      .then(([pages, response]) =>
+        res.json({
+          pages,
+          response
+        })
+      )
       .catch(next)
   }
 
@@ -97,18 +111,18 @@ module.exports = ({ Post, Comment }) => {
   }
 }
 
-const liked = userId => doc => {
+const liked = userId => ({ vote, ...doc }) => {
   let user = userId
   if (typeof user === 'object') {
     user = userId.toString()
   }
-  if (!!doc.vote.positive.find(ids => ids.toString() === user)) {
+  if (!!vote.positive.find(ids => ids.toString() === user)) {
     return {
       ...doc,
       liked: true
     }
   }
-  if (!!doc.vote.negative.find(ids => ids.toString() === user)) {
+  if (!!vote.negative.find(ids => ids.toString() === user)) {
     return {
       ...doc,
       disliked: true
