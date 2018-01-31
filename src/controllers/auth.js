@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const { JWT_SECRET } = require('../../config/SECRETS')
 
 module.exports = ({ User }) => {
   const signUp = (req, res, next) => {
@@ -21,7 +22,6 @@ module.exports = ({ User }) => {
 
   const signIn = (req, res, next) => {
     const { email, password } = req.body
-    const token = 'blabla'
     User.login({ email, password })
       .then(user => {
         if (!user) {
@@ -33,8 +33,25 @@ module.exports = ({ User }) => {
       .catch(next)
   }
 
+  const signInWithToken = (req, res, next) => {
+    const { token } = req.body
+    jwt.verify(token, JWT_SECRET, (err, response) => {
+      if (err) return next({ status: 400, message: 'invalid token' })
+      if (!response) return res.json(null)
+      User.findById(response._id).then(user => {
+        if (!user) return res.json(null)
+        const newToken = user.getJwtToken()
+        res.send({
+          user,
+          token
+        })
+      })
+    })
+  }
+
   return {
     signIn,
-    signUp
+    signUp,
+    signInWithToken
   }
 }
