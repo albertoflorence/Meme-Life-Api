@@ -4,10 +4,10 @@ const crypto = require('crypto')
 
 module.exports = Schema => {
   const userSchema = new Schema({
-    name: String,
+    name: { type: String, require: true },
     avatar: String,
-    email: String,
-    password: { type: String, select: false }
+    email: { type: String, require: true, unique: true },
+    password: { type: String, require: true, select: false }
   })
 
   userSchema.methods.getJwtToken = getJwtToken

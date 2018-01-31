@@ -7,10 +7,9 @@ module.exports = ({ User }) => {
     const newUser = new User({
       avatar,
       name,
-      email,
+      email: email.toLowerCase(),
       password
     })
-
     newUser
       .save()
       .then(user => {
@@ -38,14 +37,16 @@ module.exports = ({ User }) => {
     jwt.verify(token, JWT_SECRET, (err, response) => {
       if (err) return next({ status: 400, message: 'invalid token' })
       if (!response) return res.json(null)
-      User.findById(response._id).then(user => {
-        if (!user) return res.json(null)
-        const newToken = user.getJwtToken()
-        res.send({
-          user,
-          token
+      User.findById(response._id)
+        .then(user => {
+          if (!user) return res.json(null)
+          const newToken = user.getJwtToken()
+          res.send({
+            user,
+            token
+          })
         })
-      })
+        .catch(next)
     })
   }
 

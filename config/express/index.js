@@ -30,7 +30,11 @@ module.exports = app => {
   app.use('/comments', require('../../src/routes/comments'))
 
   app.use((error, req, res, next) => {
-    console.log(error)
+    console.log('[ ----- ERROR -----]:', error)
+    if (error.code === 11000) {
+      const field = error.message.match(/\$\w+\_/)[0].slice(1, -1)
+      return res.status(400).json({ message: field + ' already exist' })
+    }
     res.status(error.status || 500).json(error)
   })
 }
