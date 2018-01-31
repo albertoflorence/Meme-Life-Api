@@ -1,4 +1,4 @@
 # dependencies
 /node_modules
 /uploads
-/config/SECRETS.js
+/config/SECRETS_DEV.js
