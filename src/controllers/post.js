@@ -2,23 +2,18 @@ const PAGE_LIMIT = 5
 module.exports = ({ Post, Comment }) => {
   const create = (req, res, next) => {
     const { title, category, description, content } = req.body
-
     const author = req.user._id
-
-    const host = 'https://' + req.headers.host
-    const content_url = req.file
-      ? host + '/' + req.file.path.replace('\\', '/')
-      : content
+    const url = (req.file && req.file.publicUrl) || content
 
     const post = new Post({
       title,
-      content_url,
+      content_url: url,
       category,
       description,
       author,
       commentsCount: 0,
       likesCount: 0,
-      disLikesCount: 0
+      dislikesCount: 0
     })
 
     post
@@ -40,7 +35,6 @@ module.exports = ({ Post, Comment }) => {
       .sort({ createdAt: -1 })
       .limit(PAGE_LIMIT)
       .skip(skip)
-      .sort({ createdAt: -1 })
       .lean()
       .then(posts => posts.map(liked(userId)))
 

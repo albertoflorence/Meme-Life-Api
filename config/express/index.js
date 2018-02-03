@@ -1,8 +1,8 @@
 const bodyParser = require('body-parser')
 const express = require('express')
-const localStorageUpload = require('./localStorage')
+const multer = require('./localStorage')
 const passport = require('passport')
-
+const cloudStorage = require('./cloudStorage')
 module.exports = app => {
   app.use(bodyParser.json())
   app.use((req, res, next) => {
@@ -22,10 +22,9 @@ module.exports = app => {
     })(req, res, next)
   })
 
-  app.use('/uploads', express.static('uploads'))
-  const content = localStorageUpload.single('content')
+  const fileHandler = multer.single('content')
 
-  app.use('/posts', require('../../src/routes/posts')(content))
+  app.use('/posts', require('../../src/routes/posts')(fileHandler, cloudStorage))
   app.use('/users', require('../../src/routes/users'))
   app.use('/comments', require('../../src/routes/comments'))
 
